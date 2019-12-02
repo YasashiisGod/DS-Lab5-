@@ -1,132 +1,112 @@
-class node():
-    def __init__ (self, key = None, value = None):
-        self.key = None 
-        self.value = None 
-        self.prev = None 
-        self.next = None
-  
-class LRUCache :
+"""
+Created on day 11/11/2019
+Course: CS 2302 - Data Structures
+Author: Brian Perez
+Assignment: Lab #5 
+Instructor: Diego Aguirre 
+D.O.L.M.: 12/02/19 
+"""
+class LRU_Node:
+    def __init__(self, key, value, next = None, previous = None):
+        self.key = key
+        self.item = value;
+        self.next = next;
+        self.previous = previous
+
+class LRUcache:
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.dict = {}
+        self.head = None
+        self.tail = None
     
-    def __init__(self, head = None, tail = None, size):
-        self.table = [[] for i in range(size)]
-        self.head = None 
-        self.tail = None 
-        self.max_capacity = None
+    def add (self, node):
         
-    def insert(self, k):
-        location = self.hash(k)
-        bucket = self.table[location]
+        if self.head is None and self.tail is None:
+            self.head = node
+            self.tail = node
+            
+        self.tail.next = node
+        node.previous = self.tail
+        self.tail = node
+        self.dict[node.key] = node      
 
-        if not k in bucket: 
-            bucket.append(k)
+    def remove(self, node):
+        
+        if self.head is None and self.tail is None:
+            return None
+        
+        elif self.head == self.tail:
+            self.head = None
+            self.tail = None
+            
+        elif node == self.head:
+          self.head = self.head.next 
+          
+        elif node == self.tail:
+            self.tail = self.tail.previous
+            
+        else: #middle
+            previous_node = node.previous
+            next_node = node.next
+            previous_node.next = next_node
+            next_node.previous = previous_node
+        
+    def get(self, key):
+        
+        if key not in self.dict:
+            return -1
+        
+        else:
+            node = self.dict[key]
+            self.remove(node)
+            self.add(node)
+            return node.item
 
-
-  # Hashtable backs up the Doubly Linked List for O(1) access to cache items
-  
-  Map <Integer, node> hashtable = new HashMap<Integer, node>();
-  node head;
-  node tail;
-
-  int totalItemsInCache;
-  int maxCapacity;
-
-  public LRUCache(int maxCapacity) {
-    # Cache starts empty and capacity is set by client
-    totalItemsInCache = 0;
-    this.maxCapacity = maxCapacity;
-
-    # Dummy head and tail nodes to avoid empty states
-    head = new node();
-    tail = new node();
-
-    # Wire the head and tail together
-    head.next = tail;
-    tail.prev = head;
-  }
-
-  public int get(int key) {
-    node node = hashtable.get(key);
-
-    if (node == null) {
-      return -1; # we should throw an exception here, but for Leetcode's sake
-    }
-
-    # Item has been accessed. Move to the front of the cache
-    moveToHead(node);
-
-    return node.value;
-  }
-
-  public void put(int key, int value) {
-    node node = hashtable.get(key);
-
-    if (node == null) {
-      # Item not found, create a new entry
-      node newNode = new node();
-      newNode.key = key;
-      newNode.value = value;
-
-      # Add to the hashtable and the actual list that represents the cache
-      hashtable.put(key, newNode);
-      addToFront(newNode);
-      totalItemsInCache++;
-
-      # If over capacity remove the LRU item
-      if (totalItemsInCache > maxCapacity) {
-        removeLRUEntry();
-      }
-    } else {
-      # If item is found in the cache, just update it and move it to the head of the list
-      node.value = value;
-      moveToHead(node);
-    }
-
-  }
-
-  private void removeLRUEntry() {
-    node tail = popTail();
-
-    hashtable.remove(tail.key);
-    --totalItemsInCache;
-  }
-
-  private node popTail() {
-    node tailItem = tail.prev;
-    removeFromList(tailItem);
-
-    return tailItem;
-  }
-
-  private void addToFront(node node) {
-    # Wire up the new node being to be inserted
-    node.prev = head;
-    node.next = head.next;
-
-    /*
-      Re-wire the node after the head. Our node is still sitting "in the middle of nowhere".
-      We got the new node pointing to the right things, but we need to fix up the original
-      head & head's next.
-      head <-> head.next <-> head.next.next <-> head.next.next.next <-> ...
-      ^            ^
-      |- new node -|
-      That's where we are before these next 2 lines.
-    */
-    head.next.prev = node;
-    head.next = node;
-  }
-
-  private void removeFromList(node node) {
-    node savedPrev = node.prev;
-    node savedNext = node.next;
-
-    savedPrev.next = savedNext;
-    savedNext.prev = savedPrev;
-  }
-
-  private void moveToHead(node node) {
-    removeFromList(node);
-    addToFront(node);
-  }
-
-
-}
+    def put(self, key, value):
+        
+        if key in self.dict:
+            self.remove(self.dict[key])
+            
+        new_node = LRU_Node(key, value)
+        self.add(new_node)
+        self.dict[key] = new_node
+        
+        if len(self.dict) > self.capacity:
+            del self.dict[self.head.key]
+            self.head = self.head.next          
+        
+    def printing(self):
+        
+        temp = self.head
+        
+        while temp is not None:
+            print(temp.item, end=' ')
+            temp = temp.next
+            
+        print()
+        
+    def max_capacity(self):
+        return self.capacity
+    
+if __name__ == '__main__':
+    
+    LRU = LRUcache(5)
+    
+    LRU.put(9,1)
+    LRU.put(9,2)
+    LRU.put(8,4)
+    LRU.put(7,3)
+    LRU.put(9,1)
+    LRU.get(7)
+    LRU.put(5,5)
+    
+    LRU.printing()
+    print(LRU.max_capacity())
+    
+    
+    
+    
+    
+    
+    
